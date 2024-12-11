@@ -5,6 +5,8 @@ import { DirectClientInterface } from "@ai16z/client-direct";
 import { DiscordClientInterface } from "@ai16z/client-discord";
 import { TelegramClientInterface } from "@ai16z/client-telegram";
 import { TwitterClientInterface } from "@ai16z/client-twitter";
+import { TheoriqClientInterface } from "@ai16z/client-theoriq";
+
 import {
     AgentRuntime,
     CacheManager,
@@ -316,6 +318,11 @@ export async function initializeClients(
     if (clientTypes.includes("twitter")) {
         const twitterClients = await TwitterClientInterface.start(runtime);
         clients.push(twitterClients);
+    }
+
+    if (clientTypes.includes("theoriq")) {
+        const theoriqClient = await TheoriqClientInterface.start(runtime);
+        clients.push(theoriqClient);
     }
 
     if (character.plugins?.length > 0) {
