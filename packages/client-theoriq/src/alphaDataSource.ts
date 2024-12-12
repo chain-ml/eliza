@@ -1,4 +1,4 @@
-import {Content, IAgentRuntime, Memory, stringToUuid, UUID} from "@ai16z/eliza";
+import {Content, elizaLogger, IAgentRuntime, Memory, stringToUuid, UUID} from "@ai16z/eliza";
 import axios from "axios";
 
 export class AlphaDataSource {
@@ -10,23 +10,53 @@ export class AlphaDataSource {
         this.runtime = runtime;
     }
 
-    public async createMemoryForTweets(roomId: UUID): Promise<any> {
+    public async getMessageForTweets(): Promise<string | undefined> {
         const response = await axios.get(`${this.dataServiceUrl}/twitter/tweets`);
-        const tweets = response.data;
-        await this.createMemory(roomId, "here are the latest relevant tweets", tweets);
-        return tweets;
+        if (response.status == 204) {
+            return undefined
+        }
+
+        return this.formatData("here are the latest relevant tweets", response.data);
     }
 
-    public async createMemoryForCookieFun(roomId: UUID): Promise<any> {
+    public async getMessageForCookieFun(): Promise<string | undefined> {
         const response = await axios.get(`${this.dataServiceUrl}/cookie/get-cookie`);
-        const cookies = response.data;
-        await this.createMemory(roomId, "here are the latest relevant data from Cookie", cookies);
-        return cookies;
+        if (response.status == 204) {
+            return undefined
+        }
+
+        return this.formatData("here are the latest relevant projects", response.data);
     }
 
-    async createMemory(roomId: UUID, message: string, data: any): Promise<any> {
+    public async getMessageForAll(): Promise<string | undefined> {
+        const response = await axios.get(`${this.dataServiceUrl}/cookie/get-all`);
+        if (response.status == 204) {
+            return undefined
+        }
+
+        return this.formatData("here are the latest relevant projects and tweets", response.data);
+    }
+
+    public async getMessageForMock(): Promise<string | undefined> {
+        const response = await axios.get(`${this.dataServiceUrl}/cookie/get-mock`);
+        if (response.status == 204) {
+            return undefined
+        }
+
+        return this.formatData("here are the latest relevant projects and tweets", response.data);
+    }
+
+    formatData(message: string, data: any): string {
+        return `${message}: \n\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\`\`\n`
+    }
+
+    async createMemory(roomId: UUID, text: string | undefined): Promise<any> {
+        if (text === undefined) {
+            return undefined;
+        }
+
         const content: Content = {
-            text: `${message}: \n\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\`\`\n`,
+            text: text,
             attachments: [],
             source: "twitter",
             inReplyTo: undefined,

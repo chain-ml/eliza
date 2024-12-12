@@ -27,7 +27,7 @@ const twitterPostTemplate = `
 
 {{postDirections}}
 
-{{recentMessages}}
+{{alphaContent}}
 
 # Task: Generate a post in the voice and style and perspective of {{agentName}} @{{twitterUserName}}.
 Write a 1-3 sentence post that is {{adjective}} about {{topic}} (without mentioning {{topic}} directly), from the perspective of {{agentName}}. Do not add commentary or acknowledge this request, just write the post.
@@ -123,10 +123,21 @@ export class TwitterPostClient {
         this.runtime = runtime;
     }
 
-    async generateAlphaMemory(roomId: UUID): Promise<boolean> {
+    async generateAlphaMemory(roomId: UUID): Promise<any> {
         elizaLogger.debug("creating memory for Alpha")
         const datasource = new AlphaDataSource(this.runtime);
-        await datasource.createMemoryForCookieFun(roomId);
+        const message = await datasource.getMessageForAll();
+        return datasource.createMemory(roomId, message);
+    }
+
+    async generateAlphaContent(): Promise<string | undefined> {
+        elizaLogger.debug("retrieving alpha content");
+        const datasource = new AlphaDataSource(this.runtime);
+        const result = await datasource.getMessageForAll();
+        // const result = await datasource.getMessageForMock()
+        elizaLogger.debug("alpha content: ", result);
+        return result
+
     }
 
     private async generateNewTweet() {
@@ -144,21 +155,26 @@ export class TwitterPostClient {
                 "twitter"
             );
 
-            await this.generateAlphaMemory(roomId);
+            const alphaContent = await this.generateAlphaContent();
+            if (alphaContent === undefined) {
+                elizaLogger.info("no alpha contents. not generating a post.")
+                return;
+            }
 
-            const topics = this.runtime.character.topics.join(", ");
+            // const topics = this.runtime.character.topics.join(", ");
             const state = await this.runtime.composeState(
                 {
                     userId: this.runtime.agentId,
                     roomId: roomId,
                     agentId: this.runtime.agentId,
                     content: {
-                        text: topics,
+                        text: alphaContent,
                         action: "",
                     },
                 },
                 {
                     twitterUserName: this.client.profile.username,
+                    alphaContent: alphaContent,
                 }
             );
 
@@ -169,12 +185,12 @@ export class TwitterPostClient {
                     twitterPostTemplate,
             });
 
-            elizaLogger.debug("generate post prompt:\n" + context);
+            elizaLogger.debug("generate post prompt:", context);
 
             const newTweetContent = await generateText({
                 runtime: this.runtime,
                 context,
-                modelClass: ModelClass.SMALL,
+                modelClass: ModelClass.MEDIUM,
             });
 
             // Replace \n with proper line breaks and trim excess spaces

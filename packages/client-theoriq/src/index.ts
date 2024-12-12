@@ -26,14 +26,16 @@ class TheoriqManager {
 
         this.app.get("/tweets", async (req, res) => {
             const roomId = stringToUuid(req.body.roomId as UUID);
-            const tweets = await this.datasource.createMemoryForTweets(roomId);
+            const tweets = await this.datasource.getMessageForTweets();
+            await this.datasource.createMemory(roomId, tweets);
             res.json(tweets);
         });
 
         this.app.get("/cookies", async (req, res) => {
             const roomId = stringToUuid(req.body.roomId);
-            const tweets = await this.datasource.createMemoryForCookieFun(roomId);
-            res.json(tweets);
+            const cookie = await this.datasource.getMessageForCookieFun();
+            await this.datasource.createMemory(roomId, cookie);
+            res.json(cookie);
         });
 
         this.app.post("/tests/roomId", (req, res) => {
