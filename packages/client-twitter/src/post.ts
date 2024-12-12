@@ -6,10 +6,11 @@ import {
     IAgentRuntime,
     ModelClass,
     stringToUuid,
-    parseBooleanFromText,
+    parseBooleanFromText, UUID,
 } from "@ai16z/eliza";
 import { elizaLogger } from "@ai16z/eliza";
 import { ClientBase } from "./base.ts";
+import { AlphaDataSource } from "@ai16z/client-theoriq";
 
 const twitterPostTemplate = `
 # Areas of Expertise
@@ -25,6 +26,8 @@ const twitterPostTemplate = `
 {{characterPostExamples}}
 
 {{postDirections}}
+
+{{recentMessages}}
 
 # Task: Generate a post in the voice and style and perspective of {{agentName}} @{{twitterUserName}}.
 Write a 1-3 sentence post that is {{adjective}} about {{topic}} (without mentioning {{topic}} directly), from the perspective of {{agentName}}. Do not add commentary or acknowledge this request, just write the post.
@@ -120,19 +123,28 @@ export class TwitterPostClient {
         this.runtime = runtime;
     }
 
+    async generateAlphaMemory(roomId: UUID): Promise<boolean> {
+        elizaLogger.debug("creating memory for Alpha")
+        const datasource = new AlphaDataSource(this.runtime);
+        await datasource.createMemoryForCookieFun(roomId);
+    }
+
     private async generateNewTweet() {
         elizaLogger.log("Generating new tweet");
 
         try {
-            const roomId = stringToUuid(
-                "twitter_generate_room-" + this.client.profile.username
-            );
+            const roomName = "twitter_generate_room";
+            const roomId = stringToUuid(roomName);
+            elizaLogger.debug("twitter room name: " + roomName);
+            elizaLogger.debug("twitter roomId: " + roomId);
             await this.runtime.ensureUserExists(
                 this.runtime.agentId,
                 this.client.profile.username,
                 this.runtime.character.name,
                 "twitter"
             );
+
+            await this.generateAlphaMemory(roomId);
 
             const topics = this.runtime.character.topics.join(", ");
             const state = await this.runtime.composeState(
