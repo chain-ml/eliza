@@ -201,7 +201,6 @@ export class DirectClient {
                     state,
                     template: messageHandlerTemplate,
                 });
-                elizaLogger.debug("context: ", context);
                 const response = await generateMessageResponse({
                     runtime: runtime,
                     context,
