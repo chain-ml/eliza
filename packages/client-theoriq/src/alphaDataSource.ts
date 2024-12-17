@@ -6,7 +6,13 @@ export class AlphaDataSource {
     runtime: IAgentRuntime;
 
     constructor(runtime: IAgentRuntime) {
-        this.dataServiceUrl = "http://localhost:8890";
+        // this.dataServiceUrl = "http://host.docker.internal:8890";
+        this.dataServiceUrl = process.env.ELIZA_ALPHA_BOT_DATA_URL;
+        if (!this.dataServiceUrl) {
+            throw Error("ELIZA_ALPHA_BOT_DATA_URL not set")
+        }
+
+        elizaLogger.info("starting alphaDataSource with url: ", this.dataServiceUrl);
         this.runtime = runtime;
     }
 
