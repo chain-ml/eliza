@@ -1,0 +1,33 @@
+name: eliza
+services:
+  eliza:
+    image: eliza:local
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    command: ["pnpm", "start", "--characters=characters/alphaaianalyst.character.json"]
+    tty: true
+    env_file:
+    - ../.env
+    - ./eliza/.env
+    ports:
+    - "3000:3000"
+    depends_on:
+      pgvector:
+        condition: service_healthy
+    volumes:
+        - ../characters:/app/characters
+  pgvector:
+    image: "pgvector/pgvector:0.7.4-pg17"
+    ports:
+      - "5433:5432"
+    env_file: ./pgvector/.env
+    volumes:
+      - pgvector:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+volumes:
+  pgvector:
