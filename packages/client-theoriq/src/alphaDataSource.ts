@@ -3,11 +3,13 @@ import axios from "axios";
 
 export class AlphaDataSource {
     dataServiceUrl: string;
+    dataServiceMock: boolean;
     runtime: IAgentRuntime;
 
     constructor(runtime: IAgentRuntime) {
         // this.dataServiceUrl = "http://host.docker.internal:8890";
         this.dataServiceUrl = process.env.ELIZA_ALPHA_BOT_DATA_URL;
+        this.dataServiceMock = process.env.ELIZA_ALPHA_BOT_DATA_MOCK.toLowerCase() == 'true' || false;
         if (!this.dataServiceUrl) {
             throw Error("ELIZA_ALPHA_BOT_DATA_URL not set")
         }
@@ -35,6 +37,10 @@ export class AlphaDataSource {
     }
 
     public async getMessageForAll(): Promise<string | undefined> {
+        if (this.dataServiceMock) {
+            return this.getMessageForMock()
+        }
+
         const response = await axios.get(`${this.dataServiceUrl}/cookie/get-all`);
         if (response.status == 204) {
             return undefined
