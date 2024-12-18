@@ -270,6 +270,9 @@ function initializeDatabase(dataDir: string) {
         const db = new PostgresDatabaseAdapter({
             connectionString: process.env.POSTGRES_URL,
             parseInputs: true,
+            ssl: {
+                rejectUnauthorized: false,
+            }
         });
 
         // Test the connection
