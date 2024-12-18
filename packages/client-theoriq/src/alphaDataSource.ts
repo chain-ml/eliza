@@ -41,7 +41,7 @@ export class AlphaDataSource {
             return this.getMessageForMock()
         }
 
-        const response = await axios.get(`${this.dataServiceUrl}/cookie/get-all`);
+        const response = await axios.get(`${this.dataServiceUrl}`);
         if (response.status == 204) {
             return undefined
         }
